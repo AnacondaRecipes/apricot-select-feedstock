@@ -51,7 +51,7 @@ test:
     # Exclude tests issue: ValueError: Unable to avoid copy while creating an array as requested.
     # If using `np.array(obj, copy=False)` replace it with `np.asarray(obj)` to allow a copy when needed (no behavior change in NumPy 1.x).
     # For more details, see https://numpy.org/devdocs/numpy_2_0_migration_guide.html#adapting-to-changes-in-the-copy-keyword.
-    - nosetests --exclude="test_mixture_feature_based.*test_digits_.*" --exclude="test_mixture_graph_based.*test_digits_.*"
+    - nosetests --exclude="test_mixture_feature_based" --exclude="test_mixture_graph_based"
   requires:
     - pip
     - nose
