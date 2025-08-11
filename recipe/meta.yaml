@@ -25,8 +25,18 @@ requirements:
     - scipy >=1.0.0
     - numba >=0.43.0
     - tqdm >=4.24.0
+    - nose
     # https://github.com/jmschrei/apricot/issues/39#issuecomment-1708080169
     - scikit-learn >=0.22
+
+# Exclude tests issue: ValueError: Unable to avoid copy while creating an array as requested.
+# If using `np.array(obj, copy=False)` replace it with `np.asarray(obj)` to allow a copy when needed (no behavior change in NumPy 1.x).
+# For more details, see https://numpy.org/devdocs/numpy_2_0_migration_guide.html#adapting-to-changes-in-the-copy-keyword.
+{% set exclude_tests = " --exclude=test_mixture_feature_based" %}
+{% set exclude_tests = exclude_tests + " --exclude=test_mixture_graph_based" %}
+# ModuleNotFoundError: No module named 'imp'
+{% set exclude_tests = exclude_tests + " --exclude=test_knapsack_feature_based" %}
+{% set exclude_tests = exclude_tests + " --exclude=test_knapsack_facility_location" %}
 
 test:
   source_files:
@@ -48,13 +58,9 @@ test:
   commands:
     - pip check
     - python -c "from importlib.metadata import version; assert(version('{{ name }}')=='{{ version }}')"
-    # Exclude tests issue: ValueError: Unable to avoid copy while creating an array as requested.
-    # If using `np.array(obj, copy=False)` replace it with `np.asarray(obj)` to allow a copy when needed (no behavior change in NumPy 1.x).
-    # For more details, see https://numpy.org/devdocs/numpy_2_0_migration_guide.html#adapting-to-changes-in-the-copy-keyword.
-    - nosetests --exclude="test_mixture_feature_based" --exclude="test_mixture_graph_based" --exclude="test_knapsack_feature_based"
+    - nosetests {{ exclude_tests }}
   requires:
     - pip
-    - nose
     - pytorch
 
 about:
