@@ -6,30 +6,44 @@ package:
   version: {{ version }}
 
 source:
-  - url: https://pypi.org/packages/source/{{ name[0] }}/{{ name }}/apricot-select-{{ version }}.tar.gz
-    sha256: 3bf872d43ee96af141c9e4c40e4359aa6ca5e3022ae43b2a8aa46b24947b8bd8
+  url: https://github.com/jmschrei/{{ name|replace('-select', '') }}/archive/refs/tags/{{ version }}.tar.gz
+  sha256: 595b7a1a180d939e0ce9d27d6fb4d4988c054bc0e0a80362ab3aadaa35918a98
 
 build:
-  noarch: python
-  script: {{ PYTHON }} -m pip install . -vv
-  number: 2
+  script: {{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation
+  number: 0
 
 requirements:
   host:
-    - python {{ python_min }}
+    - python
     - pip
-    - setuptools 
+    - setuptools
+    - wheel
   run:
-    - python >={{ python_min }}
+    - python
     - numpy >=1.14.2
     - scipy >=1.0.0
     - numba >=0.43.0
     - tqdm >=4.24.0
     - nose
-    # dependency missing in setup.py (#39), needs to be >= 0.22 for sklearn.neighbors.KNeighborsTransformer 
+    # https://github.com/jmschrei/apricot/issues/39#issuecomment-1708080169
     - scikit-learn >=0.22
 
+# Exclude tests issue: ValueError: Unable to avoid copy while creating an array as requested.
+# If using `np.array(obj, copy=False)` replace it with `np.asarray(obj)` to allow a copy when needed (no behavior change in NumPy 1.x).
+# For more details, see https://numpy.org/devdocs/numpy_2_0_migration_guide.html#adapting-to-changes-in-the-copy-keyword.
+{% set ignore_tests = " --ignore=tests/test_functions/test_mixture_feature_based.py" %}
+{% set ignore_tests = ignore_tests + " --ignore=tests/test_functions/test_mixture_graph_based.py" %}
+# ModuleNotFoundError: No module named 'imp'
+{% set ignore_tests = ignore_tests + " --ignore=tests/test_optimizers/test_knapsack_feature_based.py" %}
+{% set ignore_tests = ignore_tests + " --ignore=tests/test_optimizers/test_knapsack_facility_location.py" %}
+# AssertionError: Arrays are not equal
+{% set ignore_tests = ignore_tests + " --ignore=tests/test_functions/test_max_coverage.py" %}
+{% set ignore_tests = ignore_tests + " --ignore=tests/test_functions/test_sum_redundancy.py" %}
+
 test:
+  source_files:
+    - tests
   imports:
     - apricot
     - apricot.optimizers
@@ -46,16 +60,24 @@ test:
     - apricot.functions.sumRedundancy
   commands:
     - pip check
+    - python -c "from importlib.metadata import version; assert(version('{{ name }}')=='{{ version }}')"
+    - pytest {{ ignore_tests }}
   requires:
     - pip
-    - python {{ python_min }}
+    - pytest
+    - pytorch
 
 about:
-  home: http://pypi.python.org/pypi/apricot-select/
-  summary: apricot is a package for submodular selection of representative sets for machine learning models.
+  home: https://github.com/jmschrei/apricot
   license: MIT
-  # jmschrei did not pack the LICENCE file in the pypi release (#34), file is included in the recipe
   license_file: LICENSE
+  license_family: MIT
+  summary: apricot is a package for submodular optimization brought to you in a convenient sklearn-like format.
+  description: apricot is a package for submodular optimization brought to you in a convenient sklearn-like format.
+    The package focuses on (1) being flexible enough for allow users to easily define their own functions and optimizers
+    just as you can in neural network libraries, and (2) being fast by using numba to speed up the computationally intensive aspects.
+  doc_url: https://apricot-select.readthedocs.io
+  dev_url: https://github.com/jmschrei/apricot
 
 extra:
   recipe-maintainers:
